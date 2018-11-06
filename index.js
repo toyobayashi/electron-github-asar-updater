@@ -59,7 +59,7 @@ class Updater {
 
   relaunch () {
     if (app.isPackaged) {
-      fs.renameSync(getPath('updater'), getPath('app'))
+      if (fs.existsSync(updater)) fs.renameSync(updater, getPath('app'))
     }
     app.relaunch()
     app.exit()

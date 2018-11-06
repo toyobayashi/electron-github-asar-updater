@@ -1,6 +1,3 @@
-# electron-github-asar-updater
-
-``` ts
 declare interface Info {
   version: string
   commit: string
@@ -21,4 +18,3 @@ declare class Updater {
 declare namespace Updater {}
 
 export = Updater
-```
