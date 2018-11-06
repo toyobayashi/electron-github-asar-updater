@@ -89,6 +89,7 @@ class Updater {
   }
 
   check () {
+    this.info = null
     const headers = {
       'User-Agent': 'electron-github-asar-updater'
     }
