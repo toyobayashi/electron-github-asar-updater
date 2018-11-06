@@ -12,7 +12,7 @@ declare class Updater {
   hasUpdate (): boolean
   getUpdateInfo (): Info | null
   download (onProgress?: (status: { name: string; current: number; max: number; loading: number }) => void): Promise<number>
-  check (): Promise<Info | null>
+  check (options?: { prerelease?: -1 | 0 | 1 }): Promise<Info | null>
 }
 
 declare namespace Updater {}

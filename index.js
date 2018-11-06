@@ -88,7 +88,22 @@ class Updater {
     }
   }
 
-  check () {
+  check (options) {
+
+    if (typeof options === 'undefined') {
+      options = {
+        prerelease: -1
+      }
+    } else if (Object.prototype.toString.call(options) === '[object Object]') {
+      if (!options.hasOwnProperty('prerelease')) {
+        options.prerelease = -1
+      } else if (options.prerelease !== -1 && options.prerelease !== 0 && options.prerelease !== 1) {
+        throw new Error('Argument type error: Updater.prototype.check(options?: { prerelease?: -1 | 0 | 1 })')
+      }
+    } else {
+      throw new Error('Argument type error: Updater.prototype.check(options?: { prerelease?: -1 | 0 | 1 })')
+    }
+
     this.info = null
     const headers = {
       'User-Agent': 'electron-github-asar-updater'
@@ -103,54 +118,63 @@ class Updater {
       json: true,
       headers
     }
-    return new Promise((resolve, reject) => {
-      request(releases, (err, _res, body) => {
-        if (err) {
-          reject(err)
-          return
-        }
-  
-        if (!body.length) {
-          this.info = null
-          resolve(null)
-          return
-        }
-  
-        const latest = body[0]
-        const version = latest.tag_name.substr(1)
-        if (semver.gte(app.getVersion(), version)) {
-          this.info = null
-          resolve(null)
-          return
-        }
 
-        const appZip = latest.assets.filter((a) => a.name === `app-${process.platform}.zip`)[0]
-        const zip = latest.assets.filter((a) => ((a.content_type === 'application/x-zip-compressed' || a.content_type === 'application/zip') && (a.name.indexOf(`${process.platform}-${process.arch}`) !== -1)))[0]
-        const exe = latest.assets.filter((a) => ((a.content_type === 'application/x-msdownload') && (a.name.indexOf(`${process.platform}-${process.arch}`) !== -1)))[0]
-  
-        const zipUrl = zip ? zip.browser_download_url : null
-        const exeUrl = exe ? exe.browser_download_url : null
-        const appZipUrl = appZip ? appZip.browser_download_url : null
-  
-        request(tags, (err, _res, body) => {
-          if (err) {
-            reject(err)
-            return
-          }
-  
-          const latestTag = body.filter((tag) => tag.name === latest.tag_name)[0]
-          const commit = latestTag.commit.sha
-          const versionData = { version, commit, zipUrl, exeUrl, appZipUrl }
-          this.info = versionData
-          resolve(versionData)
-        })
-      })
+    return Promise.all([
+      requestPromise(releases),
+      requestPromise(tags)
+    ]).then(([releaseList, tagList]) => {
+      releaseList = releaseList.filter(r => r.draft === false)
+
+      if (options.prerelease === -1) {
+        releaseList = releaseList.filter(r => r.prerelease === false)
+      } else if (options.prerelease === 1) {
+        releaseList = releaseList.filter(r => r.prerelease === true)
+      }
+
+      if (!releaseList.length) {
+        this.info = null
+        return null
+      }
+
+      releaseList.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime())
+
+      const latest = releaseList[0]
+      const version = latest.tag_name.substr(1)
+      if (semver.gte(app.getVersion(), version)) {
+        this.info = null
+        return null
+      }
+
+      const appZip = latest.assets.filter((a) => a.name === `app-${process.platform}.zip`)[0]
+      const zip = latest.assets.filter((a) => ((a.content_type === 'application/x-zip-compressed' || a.content_type === 'application/zip') && (a.name.indexOf(`${process.platform}-${process.arch}`) !== -1)))[0]
+      const exe = latest.assets.filter((a) => ((a.content_type === 'application/x-msdownload') && (a.name.indexOf(`${process.platform}-${process.arch}`) !== -1)))[0]
+
+      const zipUrl = zip ? zip.browser_download_url : null
+      const exeUrl = exe ? exe.browser_download_url : null
+      const appZipUrl = appZip ? appZip.browser_download_url : null
+
+      const latestTag = tagList.filter((tag) => tag.name === latest.tag_name)[0]
+      const commit = latestTag ? latestTag.commit.sha : ''
+      const info = { version, commit, zipUrl, exeUrl, appZipUrl, release: latest, tag: latestTag }
+      this.info = info
+      return info
     })
   }
 }
 
 function getPath (...relative) {
   return (process.versions.electron && process.type === 'browser') ? path.join(process.resourcesPath, ...relative) : path.join(__dirname, '../../..', ...relative)
+}
+
+function requestPromise (options) {
+  return new Promise((resolve, reject) => {
+    request(options, (err, res, body) => {
+      if (err) {
+        err.res = res
+        reject(err)
+      } else resolve(body)
+    })
+  })
 }
 
 module.exports = Updater

@@ -17,14 +17,27 @@ const updater = new Updater('githubUser/repoName');
 
 (async function () {
   /**
-   * Check update.
-   * Tag name must be "vX.X.X"
+   * Check latest github release.
+   * 
+   * Tag name must be "vX.X.X".
+   * For example: v2.3.3
+   * 
    * Asar zip name must be `app-${process.platform}.zip`
-   * Full asset name must be
-   * `${app.getName()}-v${app.getVersion()}-${process.platform}-${process.arch}` +
-   * .zip or .exe or .deb
+   * For example: app-win32.zip app-linux.zip
+   * 
+   * Full asset name example:
+   * myapp-v2.3.3-win32-x64.zip
+   * myapp-v2.3.3-win32-ia32.exe
+   * myapp-v2.3.3-linux-x64.deb
    */
-  await updater.check()
+  await updater.check({
+    /**
+     * -1: ignore pre-release (default)
+     * 0:  include pre-release
+     * 1:  check prerelease only
+     */
+    prerelease: -1
+  })
 
   if (updater.hasUpdate()) { // or if (updater.getUpdateInfo())
     console.log(updater.getUpdateInfo())
@@ -34,7 +47,16 @@ const updater = new Updater('githubUser/repoName');
      * `${process.resourcesPath}/.patch`
      */
     await updater.download(({ name, current, max, loading }) => {
-      // do something, return void
+      /**
+       * {
+       *   name: string;
+       *   current: number;
+       *   max: number;
+       *   loading: number;
+       * }
+       * 
+       * do something, return void
+       */
     })
 
     /**
