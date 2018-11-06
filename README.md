@@ -1,0 +1,1 @@
+# electron-github-asar-updater

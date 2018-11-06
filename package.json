@@ -1,0 +1,27 @@
+{
+  "name": "electron-github-asar-updater",
+  "version": "1.0.0",
+  "description": "electron asar updater",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/toyobayashi/electron-github-asar-updater.git"
+  },
+  "keywords": [
+    "electron",
+    "asar",
+    "updater"
+  ],
+  "author": "toyobayashi",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/toyobayashi/electron-github-asar-updater/issues"
+  },
+  "homepage": "https://github.com/toyobayashi/electron-github-asar-updater#readme",
+  "dependencies": {
+    "fs-extra": "^7.0.0",
+    "request": "^2.88.0",
+    "semver": "^5.6.0",
+    "zauz": "^1.0.2"
+  }
+}
