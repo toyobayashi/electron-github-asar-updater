@@ -7,7 +7,7 @@ const download = require('./lib/download.js')
 
 let app = null
 try {
-  app = require('electron')
+  app = require('electron').app
   if (typeof app.isPackaged === 'undefined') {
     app.isPackaged = (() => {
       const execFile = path.basename(process.execPath).toLowerCase()
