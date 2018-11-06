@@ -7,7 +7,7 @@ declare interface Info {
 }
 
 declare class Updater {
-  constructor (repo: string): void
+  constructor (repo: string)
   relaunch (): void
   hasUpdate (): boolean
   getUpdateInfo (): Info | null
