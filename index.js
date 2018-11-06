@@ -45,9 +45,10 @@ class Updater {
     this.info = null
 
     if (app.isPackaged) {
-      if (!fs.existsSync(getPath('./updater/index.js'))) {
+      if (!fs.existsSync(getPath('./updater/index.js')) || !fs.existsSync(getPath('./updater/package.json'))) {
         fs.mkdirsSync(updater)
         fs.writeFileSync(getPath('./updater/index.js'), updaterScript)
+        fs.writeFileSync(getPath('./updater/package.json'), JSON.stringify({ main: './index.js' }))
       }
 
       if (fs.existsSync(dotPatch)) {
