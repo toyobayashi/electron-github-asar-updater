@@ -13,7 +13,7 @@ const Updater = require('electron-github-asar-updater')
  * ${process.resourcesPath}/updater/index.js
  * ${process.resourcesPath}/updater/package.json
  */
-const updater = new Updater('githubUser/repoName')
+const updater = new Updater('githubUser/repoName');
 
 (async function () {
   /**
