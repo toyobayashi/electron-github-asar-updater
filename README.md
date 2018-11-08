@@ -2,6 +2,8 @@
 
 This package works after Electron app is packaged.
 
+electron-github-asar-updater v2.x require Electron version >= 2.0.0
+
 ## Usage
 
 ``` js
@@ -22,8 +24,8 @@ const updater = new Updater('githubUser/repoName');
    * Tag name must be "vX.X.X".
    * For example: v2.3.3
    * 
-   * Asar zip name must be `app-${process.platform}.zip`
-   * For example: app-win32.zip app-linux.zip
+   * Asar zip name must be `app-${process.platform}-${process.arch}.zip`
+   * For example: app-win32-ia32.zip app-linux-x64.zip
    * 
    * Full asset name example:
    * myapp-v2.3.3-win32-x64.zip
@@ -61,7 +63,7 @@ const updater = new Updater('githubUser/repoName');
 
     /**
      * 1. Rename `${process.resourcesPath}/updater` to `${process.resourcesPath}/app`
-     * 2. Relaunch. Move `${process.resourcesPath}/.patch/*` to `${process.resourcesPath}`
+     * 2. Relaunch. Copy `${process.resourcesPath}/.patch/*` to `${process.resourcesPath}`
      * 3. Remove `${process.resourcesPath}/.patch`
      * 4. Rename `${process.resourcesPath}/app` to `${process.resourcesPath}/updater`
      * 5. Relaunch

@@ -145,7 +145,7 @@ class Updater {
         return null
       }
 
-      const appZip = latest.assets.filter((a) => a.name === `app-${process.platform}.zip`)[0]
+      const appZip = latest.assets.filter((a) => a.name === `app-${process.platform}-${process.arch}.zip`)[0]
       const zip = latest.assets.filter((a) => ((a.content_type === 'application/x-zip-compressed' || a.content_type === 'application/zip') && (a.name.indexOf(`${process.platform}-${process.arch}`) !== -1)))[0]
       const exe = latest.assets.filter((a) => ((a.content_type === 'application/x-msdownload') && (a.name.indexOf(`${process.platform}-${process.arch}`) !== -1)))[0]
 
