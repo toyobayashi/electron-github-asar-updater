@@ -97,9 +97,10 @@ declare interface Info {
 declare class Updater {
   constructor (repo: string)
   relaunch (): void
-  hasUpdate (): boolean
+  isReadyToDownload (): boolean
   getUpdateInfo (): Info | null
   download (onProgress?: (status: { name: string; current: number; max: number; loading: number }) => void): Promise<number>
+  abort (): void
   check (options?: { prerelease?: -1 | 0 | 1 }): Promise<Info | null>
 }
 

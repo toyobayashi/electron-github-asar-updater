@@ -43,6 +43,7 @@ class Updater {
     if (!repo) throw new Error('new Updater(\'Your github repo\')')
     this.repo = repo
     this.info = null
+    this.req = null
 
     if (app.isPackaged) {
       if (!fs.existsSync(getPath('./updater/index.js')) || !fs.existsSync(getPath('./updater/package.json'))) {
@@ -65,7 +66,7 @@ class Updater {
     app.exit()
   }
 
-  hasUpdate () {
+  isReadyToDownload () {
     return !!this.info && !!this.info.appZipUrl
   }
 
@@ -73,15 +74,35 @@ class Updater {
     return this.info
   }
 
+  abort () {
+    if (this.req) {
+      this.req.abort()
+      this.req = null
+    }
+  }
+
   download (onProgress) {
     if (app.isPackaged) {
-      if (!this.hasUpdate()) return Promise.reject('No update.')
-      return download(this.info.appZipUrl, getPath('app.zip'), onProgress).then(() => {
-        if (!fs.existsSync(dotPatch)) fs.mkdirsSync(dotPatch)
-        return unzip(getPath('app.zip'), dotPatch)
-      }).then((size) => {
-        fs.removeSync(getPath('app.zip'))
-        return size
+      if (!this.isReadyToDownload()) return Promise.reject('No update or target file `app-${platform}-${arch}.zip` not found.')
+      this.abort()
+      return new Promise((resolve, reject) => {
+        this.req = download(this.info.appZipUrl, getPath('app.zip'), onProgress, (err, filepath) => {
+          if (err) {
+            reject(err)
+            return
+          }
+          if (filepath) {
+            if (!fs.existsSync(dotPatch)) fs.mkdirsSync(dotPatch)
+            unzip(getPath('app.zip'), dotPatch).then((size) => {
+              fs.removeSync(getPath('app.zip'))
+              resolve(size)
+            }).catch(err => {
+              reject(err)
+            })
+          } else {
+            resolve(-1)
+          }
+        })
       })
     } else {
       return Promise.resolve(-1)

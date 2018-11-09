@@ -41,34 +41,36 @@ const updater = new Updater('githubUser/repoName');
     prerelease: -1
   })
 
-  if (updater.hasUpdate()) { // or if (updater.getUpdateInfo())
-    console.log(updater.getUpdateInfo())
-
-    /**
-     * Download `app-${process.platform}.zip` and unzip to
-     * `${process.resourcesPath}/.patch`
-     */
-    await updater.download(({ name, current, max, loading }) => {
+  const info = updater.getUpdateInfo()
+  if (info) {
+    console.log(info)
+    if (updater.isReadyToDownload()) {
       /**
-       * {
-       *   name: string;
-       *   current: number;
-       *   max: number;
-       *   loading: number;
-       * }
-       * 
-       * do something, return void
+       * Download `app-${process.platform}.zip` and unzip to
+       * `${process.resourcesPath}/.patch`
        */
-    })
+      await updater.download(({ name, current, max, loading }) => {
+        /**
+         * {
+         *   name: string;
+         *   current: number;
+         *   max: number;
+         *   loading: number;
+         * }
+         * 
+         * do something, return void
+         */
+      })
 
-    /**
-     * 1. Rename `${process.resourcesPath}/updater` to `${process.resourcesPath}/app`
-     * 2. Relaunch. Copy `${process.resourcesPath}/.patch/*` to `${process.resourcesPath}`
-     * 3. Remove `${process.resourcesPath}/.patch`
-     * 4. Rename `${process.resourcesPath}/app` to `${process.resourcesPath}/updater`
-     * 5. Relaunch
-     */ 
-    updater.relaunch()
+      /**
+       * 1. Rename `${process.resourcesPath}/updater` to `${process.resourcesPath}/app`
+       * 2. Relaunch. Copy `${process.resourcesPath}/.patch/*` to `${process.resourcesPath}`
+       * 3. Remove `${process.resourcesPath}/.patch`
+       * 4. Rename `${process.resourcesPath}/app` to `${process.resourcesPath}/updater`
+       * 5. Relaunch
+       */ 
+      updater.relaunch()
+    }
   }
 })()
 ```
