@@ -42,9 +42,10 @@ const updater = new Updater('githubUser/repoName');
   })
 
   const info = updater.getUpdateInfo()
-  if (info) {
+  if (info) { // newer version found
+    
     console.log(info)
-    if (updater.isReadyToDownload()) {
+    if (updater.isReadyToDownload()) { // exists `app-${process.platform}-${process.arch}.zip`
       /**
        * Download `app-${process.platform}.zip` and unzip to
        * `${process.resourcesPath}/.patch`
@@ -62,7 +63,7 @@ const updater = new Updater('githubUser/repoName');
          */
       })
 
-      if (downloadResult) {
+      if (downloadResult) { // Success
         /**
          * 1. Rename `${process.resourcesPath}/updater` to `${process.resourcesPath}/app`
          * 2. Relaunch. Copy `${process.resourcesPath}/.patch/*` to `${process.resourcesPath}`
@@ -71,6 +72,8 @@ const updater = new Updater('githubUser/repoName');
          * 5. Relaunch
          */ 
         updater.relaunch()
+      } else {
+        console.log('download aborted.')
       }
     }
   }
