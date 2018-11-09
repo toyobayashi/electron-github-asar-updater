@@ -93,19 +93,19 @@ class Updater {
           }
           if (filepath) {
             if (!fs.existsSync(dotPatch)) fs.mkdirsSync(dotPatch)
-            unzip(getPath('app.zip'), dotPatch).then((size) => {
+            unzip(getPath('app.zip'), dotPatch).then(() => {
               fs.removeSync(getPath('app.zip'))
-              resolve(size)
+              resolve(true)
             }).catch(err => {
               reject(err)
             })
           } else {
-            resolve(-1)
+            resolve(false)
           }
         })
       })
     } else {
-      return Promise.resolve(-1)
+      return Promise.resolve(false)
     }
   }
 

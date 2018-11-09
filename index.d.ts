@@ -99,7 +99,7 @@ declare class Updater {
   relaunch (): void
   isReadyToDownload (): boolean
   getUpdateInfo (): Info | null
-  download (onProgress?: (status: { name: string; current: number; max: number; loading: number }) => void): Promise<number>
+  download (onProgress?: (status: { name: string; current: number; max: number; loading: number }) => void): Promise<boolean>
   abort (): void
   check (options?: { prerelease?: -1 | 0 | 1 }): Promise<Info | null>
 }

@@ -49,7 +49,7 @@ const updater = new Updater('githubUser/repoName');
        * Download `app-${process.platform}.zip` and unzip to
        * `${process.resourcesPath}/.patch`
        */
-      await updater.download(({ name, current, max, loading }) => {
+      const downloadResult = await updater.download(({ name, current, max, loading }) => {
         /**
          * {
          *   name: string;
@@ -62,14 +62,16 @@ const updater = new Updater('githubUser/repoName');
          */
       })
 
-      /**
-       * 1. Rename `${process.resourcesPath}/updater` to `${process.resourcesPath}/app`
-       * 2. Relaunch. Copy `${process.resourcesPath}/.patch/*` to `${process.resourcesPath}`
-       * 3. Remove `${process.resourcesPath}/.patch`
-       * 4. Rename `${process.resourcesPath}/app` to `${process.resourcesPath}/updater`
-       * 5. Relaunch
-       */ 
-      updater.relaunch()
+      if (downloadResult) {
+        /**
+         * 1. Rename `${process.resourcesPath}/updater` to `${process.resourcesPath}/app`
+         * 2. Relaunch. Copy `${process.resourcesPath}/.patch/*` to `${process.resourcesPath}`
+         * 3. Remove `${process.resourcesPath}/.patch`
+         * 4. Rename `${process.resourcesPath}/app` to `${process.resourcesPath}/updater`
+         * 5. Relaunch
+         */ 
+        updater.relaunch()
+      }
     }
   }
 })()
