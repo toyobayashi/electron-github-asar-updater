@@ -15,7 +15,7 @@ const Updater = require('electron-github-asar-updater')
  * ${process.resourcesPath}/updater/index.js
  * ${process.resourcesPath}/updater/package.json
  */
-const updater = new Updater('githubUser/repoName');
+const updater = new Updater('githubUser/repoName', 'resources');
 
 (async function () {
   /**
@@ -24,8 +24,8 @@ const updater = new Updater('githubUser/repoName');
    * Tag name must be "vX.X.X".
    * For example: v2.3.3
    * 
-   * Asar zip name must be `app-${process.platform}-${process.arch}.zip`
-   * For example: app-win32-ia32.zip app-linux-x64.zip
+   * Asar zip name must be `resources-${process.platform}-${process.arch}.zip`
+   * For example: resources-win32-ia32.zip resources-linux-x64.zip
    * 
    * Full asset name example:
    * myapp-v2.3.3-win32-x64.zip
@@ -45,9 +45,9 @@ const updater = new Updater('githubUser/repoName');
   if (info) { // newer version found
     
     console.log(info)
-    if (updater.isReadyToDownload()) { // exists `app-${process.platform}-${process.arch}.zip`
+    if (updater.isReadyToDownload()) { // exists `resources-${process.platform}-${process.arch}.zip`
       /**
-       * Download `app-${process.platform}.zip` and unzip to
+       * Download `resources-${process.platform}.zip` and unzip to
        * `${process.resourcesPath}/.patch`
        */
       const downloadResult = await updater.download(({ name, current, max, loading }) => {

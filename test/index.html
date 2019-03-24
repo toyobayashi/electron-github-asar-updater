@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Hello World!</title>
+  </head>
+  <body>
+    <h1>Hello World!</h1>
+    We are using Node.js <script>document.write(process.versions.node)</script>,
+    Chromium <script>document.write(process.versions.chrome)</script>,
+    and Electron <script>document.write(process.versions.electron)</script>.
+
+    <p><script>document.write(require('electron').remote.app.getVersion())</script></p>
+    <p id="message"></p>
+    <div><button id="update">UPDATE</button></div>
+
+    <script>
+      require('./renderer.js')
+    </script>
+  </body>
+</html>

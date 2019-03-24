@@ -7,18 +7,22 @@ const download = require('./lib/download.js')
 const updaterScript = require('./lib/updater.js')
 
 let app = null
+let isElectronEnvironment = true
 try {
-  app = require('electron').app
+  app = require('electron').app || require('electron').remote.app
   if (typeof app.isPackaged === 'undefined') {
-    app.isPackaged = (() => {
-      const execFile = path.basename(process.execPath).toLowerCase()
-      if (process.platform === 'win32') {
-        return execFile !== 'electron.exe'
+    Object.defineProperty(app, 'isPackaged', {
+      get () {
+        const execFile = path.basename(process.execPath).toLowerCase()
+        if (process.platform === 'win32') {
+          return execFile !== 'electron.exe'
+        }
+        return execFile !== 'electron'
       }
-      return execFile !== 'electron'
-    })()
+    })
   }
 } catch (_) {
+  isElectronEnvironment = false
   app = {
     relaunch () {
       require('child_process').spawn(process.argv0, process.argv.slice(1), { detached: process.platform === 'win32', stdio: 'ignore' }).unref()
@@ -27,23 +31,31 @@ try {
       process.exit(number)
     },
     getVersion () {
-      return require('./package.json').version
-    },
-    isPackaged () {
-      return false
+      try {
+        return require(path.join(process.cwd(), 'package.json')).version
+      } catch (__) {
+        return '0.0.0'
+      }
     }
   }
+  Object.defineProperty(app, 'isPackaged', {
+    get () {
+      return false
+    }
+  })
 }
 
 const dotPatch = getPath('.patch')
 const updater = getPath('updater')
 
 class Updater {
-  constructor (repo) {
-    if (!repo) throw new Error('new Updater(\'Your github repo\')')
+  constructor (repo, prefix = 'app') {
+    if (typeof repo !== 'string') throw new TypeError('Argument type error: new Updater(repo: string, prefix?: string)')
+    if (typeof prefix !== 'string') throw new TypeError('Argument type error: new Updater(repo: string, prefix?: string)')
     this.repo = repo
     this.info = null
     this.req = null
+    this.prefix = prefix
 
     if (app.isPackaged) {
       if (!fs.existsSync(getPath('./updater/index.js')) || !fs.existsSync(getPath('./updater/package.json'))) {
@@ -83,7 +95,7 @@ class Updater {
 
   download (onProgress) {
     if (app.isPackaged) {
-      if (!this.isReadyToDownload()) return Promise.reject('No update or target file `app-${platform}-${arch}.zip` not found.')
+      if (!this.isReadyToDownload()) return Promise.reject(`No update or target file \`${this.prefix}-\${platform}-\${arch}.zip\` not found.`)
       this.abort()
       return new Promise((resolve, reject) => {
         this.req = download(this.info.appZipUrl, getPath('app.zip'), onProgress, (err, filepath) => {
@@ -119,10 +131,10 @@ class Updater {
       if (!options.hasOwnProperty('prerelease')) {
         options.prerelease = -1
       } else if (options.prerelease !== -1 && options.prerelease !== 0 && options.prerelease !== 1) {
-        throw new Error('Argument type error: Updater.prototype.check(options?: { prerelease?: -1 | 0 | 1 })')
+        throw new TypeError('Argument type error: Updater.prototype.check(options?: { prerelease?: -1 | 0 | 1 })')
       }
     } else {
-      throw new Error('Argument type error: Updater.prototype.check(options?: { prerelease?: -1 | 0 | 1 })')
+      throw new TypeError('Argument type error: Updater.prototype.check(options?: { prerelease?: -1 | 0 | 1 })')
     }
 
     this.info = null
@@ -166,7 +178,7 @@ class Updater {
         return null
       }
 
-      const appZip = latest.assets.filter((a) => a.name === `app-${process.platform}-${process.arch}.zip`)[0]
+      const appZip = latest.assets.filter((a) => a.name === `${this.prefix}-${process.platform}-${process.arch}.zip`)[0]
       const zip = latest.assets.filter((a) => ((a.content_type === 'application/x-zip-compressed' || a.content_type === 'application/zip') && (a.name.indexOf(`${process.platform}-${process.arch}`) !== -1)))[0]
       const exe = latest.assets.filter((a) => ((a.content_type === 'application/x-msdownload') && (a.name.indexOf(`${process.platform}-${process.arch}`) !== -1)))[0]
 
@@ -184,7 +196,7 @@ class Updater {
 }
 
 function getPath (...relative) {
-  return (process.versions.electron && process.type === 'browser') ? path.join(process.resourcesPath, ...relative) : path.join(__dirname, '../../..', ...relative)
+  return isElectronEnvironment ? path.join(process.resourcesPath, ...relative) : path.join(__dirname, '../../..', ...relative)
 }
 
 function requestPromise (options) {
