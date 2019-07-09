@@ -1,6 +1,6 @@
 {
   "name": "electron-github-asar-updater",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "electron asar updater",
   "main": "index.js",
   "engines": {
@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/toyobayashi/electron-github-asar-updater#readme",
   "dependencies": {
-    "fs-extra": "^7.0.1",
+    "fs-extra": "^8.1.0",
     "request": "^2.88.0",
     "semver": "^5.6.0",
     "zauz": "^1.0.2"
