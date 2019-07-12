@@ -1,7 +1,8 @@
 const path = require('path')
 const fs = require('fs-extra')
 const semver = require('semver')
-const request = require('request')
+// const request = require('request')
+const got = require('got')
 const { unzip } = require('zauz')
 const download = require('./lib/download.js')
 const updaterScript = require('./lib/updater.js')
@@ -54,7 +55,7 @@ class Updater {
     if (typeof prefix !== 'string') throw new TypeError('Argument type error: new Updater(repo: string, prefix?: string)')
     this.repo = repo
     this.info = null
-    this.req = null
+    this.reqObj = null
     this.prefix = prefix
 
     if (app.isPackaged) {
@@ -87,9 +88,9 @@ class Updater {
   }
 
   abort () {
-    if (this.req) {
-      this.req.abort()
-      this.req = null
+    if (this.reqObj) {
+      this.reqObj.req.abort()
+      this.reqObj.req = null
     }
   }
 
@@ -98,7 +99,7 @@ class Updater {
       if (!this.isReadyToDownload()) return Promise.reject(`No update or target file \`${this.prefix}-\${platform}-\${arch}.zip\` not found.`)
       this.abort()
       return new Promise((resolve, reject) => {
-        this.req = download(this.info.appZipUrl, getPath('app.zip'), onProgress, (err, filepath) => {
+        this.reqObj = download(this.info.appZipUrl, getPath('app.zip'), onProgress, (err, filepath) => {
           if (err) {
             reject(err)
             return
@@ -153,9 +154,9 @@ class Updater {
     }
 
     return Promise.all([
-      requestPromise(releases),
-      requestPromise(tags)
-    ]).then(([releaseList, tagList]) => {
+      got.get(releases.url, { json: true, headers }),
+      got.get(tags.url, { json: true, headers })
+    ]).then(([{ body: releaseList }, { body: tagList }]) => {
       releaseList = releaseList.filter(r => r.draft === false)
 
       if (options.prerelease === -1) {
@@ -199,15 +200,15 @@ function getPath (...relative) {
   return isElectronEnvironment ? path.join(process.resourcesPath, ...relative) : path.join(__dirname, '../../..', ...relative)
 }
 
-function requestPromise (options) {
-  return new Promise((resolve, reject) => {
-    request(options, (err, res, body) => {
-      if (err) {
-        err.res = res
-        reject(err)
-      } else resolve(body)
-    })
-  })
-}
+// function requestPromise (options) {
+//   return new Promise((resolve, reject) => {
+//     request(options, (err, res, body) => {
+//       if (err) {
+//         err.res = res
+//         reject(err)
+//       } else resolve(body)
+//     })
+//   })
+// }
 
 module.exports = Updater

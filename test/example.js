@@ -1,9 +1,5 @@
-let Updater = null
-try {
-  Updater = require('electron-github-asar-updater')
-} catch (_) {
-  Updater = require('..')
-}
+const Updater = require('electron-github-asar-updater')
+
 const { ipcMain } = require('electron')
 
 module.exports = function () {
