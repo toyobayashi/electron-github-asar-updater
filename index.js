@@ -54,7 +54,7 @@ class Updater {
     if (typeof prefix !== 'string') throw new TypeError('Argument type error: new Updater(repo: string, prefix?: string)')
     this.repo = repo
     this.info = null
-    this.req = null
+    this.reqObj = null
     this.prefix = prefix
 
     if (app.isPackaged) {
@@ -87,9 +87,9 @@ class Updater {
   }
 
   abort () {
-    if (this.req) {
-      this.req.abort()
-      this.req = null
+    if (this.reqObj) {
+      this.reqObj.req.abort()
+      this.reqObj.req = null
     }
   }
 
@@ -98,7 +98,7 @@ class Updater {
       if (!this.isReadyToDownload()) return Promise.reject(`No update or target file \`${this.prefix}-\${platform}-\${arch}.zip\` not found.`)
       this.abort()
       return new Promise((resolve, reject) => {
-        this.req = download(this.info.appZipUrl, getPath('app.zip'), onProgress, (err, filepath) => {
+        this.reqObj = download(this.info.appZipUrl, getPath('app.zip'), onProgress, (err, filepath) => {
           if (err) {
             reject(err)
             return
