@@ -1,0 +1,8 @@
+1001 DIALOGEX 0, 0, 187, 55
+STYLE 72 | 80 | 512 | 4 | 2147483648 | 12582912 // | 524288
+CAPTION "updater"
+FONT 8, "MS Shell Dlg", 400, 0, 0x0
+BEGIN
+    LTEXT           "Updating...",-1,11,9,165,8
+    CONTROL         "",10001,"msctls_progress32",8 | 8388608,11,27,165,14
+END
