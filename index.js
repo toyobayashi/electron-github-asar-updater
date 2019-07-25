@@ -1,4 +1,5 @@
 const path = require('path')
+const { spawn } = require('child_process')
 const fs = require('fs-extra')
 const semver = require('semver')
 // const request = require('request')
@@ -26,7 +27,7 @@ try {
   isElectronEnvironment = false
   app = {
     relaunch () {
-      require('child_process').spawn(process.argv0, process.argv.slice(1), { detached: process.platform === 'win32', stdio: 'ignore' }).unref()
+      spawn(process.argv0, process.argv.slice(1), { detached: process.platform === 'win32', stdio: 'ignore' }).unref()
     },
     exit (number) {
       process.exit(number)
@@ -57,14 +58,17 @@ class Updater {
     this.info = null
     this.reqObj = null
     this.prefix = prefix
+    this.execPath = path.join(__dirname, `./bin/updater${process.platform === 'win32' ? '.exe' : ''}`).replace(/\.asar/g, '.asar.unpacked')
 
     if (app.isPackaged) {
-      if (!fs.existsSync(getPath('./updater/index.js')) || !fs.existsSync(getPath('./updater/package.json'))) {
-        fs.mkdirsSync(updater)
-        fs.writeFileSync(getPath('./updater/index.js'), updaterScript)
-        fs.writeFileSync(getPath('./updater/package.json'), JSON.stringify({ main: './index.js' }))
+      if (!fs.existsSync(this.execPath)) {
+        if (!fs.existsSync(getPath('./updater/index.js')) || !fs.existsSync(getPath('./updater/package.json'))) {
+          fs.mkdirsSync(updater)
+          fs.writeFileSync(getPath('./updater/index.js'), updaterScript)
+          fs.writeFileSync(getPath('./updater/package.json'), JSON.stringify({ main: './index.js' }))
+        }
       }
-
+      
       if (fs.existsSync(dotPatch)) {
         this.relaunch()
       }
@@ -73,10 +77,27 @@ class Updater {
 
   relaunch () {
     if (app.isPackaged) {
-      if (fs.existsSync(updater)) fs.renameSync(updater, getPath('app'))
+      if (fs.existsSync(this.execPath)) {
+        spawn(
+          this.execPath,
+          process.platform === 'win32' ? [
+            getPath('.patch'),
+            getPath(),
+            [process.argv0, ...process.argv.slice(1)].join(' ')
+          ] : [
+            getPath('.patch'),
+            getPath(),
+            process.argv0,
+            ...process.argv.slice(1)
+          ], { detached: process.platform === 'win32', stdio: 'ignore' }
+        ).unref()
+        app.exit()
+      } else {
+        if (fs.existsSync(updater)) fs.renameSync(updater, getPath('app'))
+        app.relaunch()
+        app.exit()
+      }
     }
-    app.relaunch()
-    app.exit()
   }
 
   isReadyToDownload () {
@@ -199,16 +220,5 @@ class Updater {
 function getPath (...relative) {
   return isElectronEnvironment ? path.join(process.resourcesPath, ...relative) : path.join(__dirname, '../../..', ...relative)
 }
-
-// function requestPromise (options) {
-//   return new Promise((resolve, reject) => {
-//     request(options, (err, res, body) => {
-//       if (err) {
-//         err.res = res
-//         reject(err)
-//       } else resolve(body)
-//     })
-//   })
-// }
 
 module.exports = Updater
