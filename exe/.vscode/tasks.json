@@ -1,0 +1,37 @@
+{
+  "version": "2.0.0",
+  "windows": {
+    "options": {
+      "shell": {
+        "executable": "c:\\windows\\System32\\wsl.exe",
+        "args": [
+          "-e"
+        ]
+      }
+    }
+  },
+  "tasks": [
+    {
+      "label": "build Debug",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "-C",
+        "./out/linux/debug"
+      ]
+    },
+    {
+      "label": "build Release",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "-C",
+        "./out/linux/release"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}

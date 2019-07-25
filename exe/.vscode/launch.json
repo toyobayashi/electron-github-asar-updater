@@ -1,0 +1,45 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "(gdb) Launch",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "/mnt/e/code/electron-github-asar-updater/exe/out/linux/debug/updater",
+      "args": [
+        ""
+      ],
+      "stopAtEntry": true,
+      "cwd": "/mnt/e/code/electron-github-asar-updater/exe/out/linux/debug",
+      "environment": [],
+      "externalConsole": true,
+      "windows": {
+        "MIMode": "gdb",
+        "miDebuggerPath": "/usr/bin/gdb",
+        "externalConsole": true,
+        "setupCommands": [
+          {
+            "description": "Enable pretty-printing for gdb",
+            "text": "-enable-pretty-printing",
+            "ignoreFailures": true
+          }
+        ]
+      },
+      "pipeTransport": {
+        "pipeCwd": "",
+        "pipeProgram": "c:\\windows\\sysnative\\bash.exe",
+        "pipeArgs": [
+          "-c"
+        ],
+        "debuggerPath": "/usr/bin/gdb"
+      },
+      "sourceFileMap": {
+        "/mnt/c": "c:\\",
+        "/mnt/d": "d:\\",
+        "/mnt/e": "e:\\",
+        "/usr": "\\\\wsl$\\Ubuntu\\usr"
+      },
+      "preLaunchTask": "build Debug"
+    }
+  ]
+}
