@@ -28,19 +28,18 @@ void InitCommandLineArgs() {
 static DWORD WINAPI main_thread(LPVOID lpParameter) {
   int code;
   HWND hwnd;
-  WCHAR display[10];
+  WCHAR display[20];
 
   hwnd = (HWND)lpParameter;
-  memset(display, 0, 10);
+  memset(display, 0, 20 * sizeof(WCHAR));
   code = start(argc, wargv);
 
   ShowWindow(hwnd, SW_HIDE);
   if (code != 0) {
-    swprintf(display, 10, L"更新失败：%d", code);
+    swprintf(display, 20, L"Update Failed：%d", code);
     MessageBoxW(hwnd, display, L"updater", MB_OK);
   }
   SendMessageW(hwnd, WM_CLOSE, (WPARAM)NULL, (LPARAM)NULL);
-  // MessageBoxW(NULL, _itow(code, display, 10), L"参数", MB_OK);
   return code;
 }
 
