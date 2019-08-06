@@ -2,7 +2,6 @@ const path = require('path')
 const { spawn } = require('child_process')
 const fs = require('fs-extra')
 const semver = require('semver')
-// const request = require('request')
 const got = require('got')
 const { unzip } = require('zauz')
 const download = require('./lib/download.js')
@@ -51,17 +50,18 @@ const dotPatch = getPath('.patch')
 const updater = getPath('updater')
 
 class Updater {
-  constructor (repo, prefix = 'app') {
-    if (typeof repo !== 'string') throw new TypeError('Argument type error: new Updater(repo: string, prefix?: string)')
-    if (typeof prefix !== 'string') throw new TypeError('Argument type error: new Updater(repo: string, prefix?: string)')
+  constructor (repo, prefix = 'app', customExe = false) {
+    if (typeof repo !== 'string') throw new TypeError('Argument type error: new Updater(repo: string, prefix?: string, exe?: boolean)')
+    if (typeof prefix !== 'string') throw new TypeError('Argument type error: new Updater(repo: string, prefix?: string, exe?: boolean)')
+    if (typeof customExe !== 'boolean') throw new TypeError('Argument type error: new Updater(repo: string, prefix?: string, exe?: boolean)')
     this.repo = repo
     this.info = null
     this.reqObj = null
     this.prefix = prefix
-    this.execPath = path.join(__dirname, `./bin/updater${process.platform === 'win32' ? '.exe' : ''}`).replace(/\.asar/g, '.asar.unpacked')
+    this.customExe = customExe
 
     if (app.isPackaged) {
-      if (!fs.existsSync(this.execPath)) {
+      if (!this.customExe) {
         if (!fs.existsSync(getPath('./updater/index.js')) || !fs.existsSync(getPath('./updater/package.json'))) {
           fs.mkdirsSync(updater)
           fs.writeFileSync(getPath('./updater/index.js'), updaterScript)
@@ -77,20 +77,7 @@ class Updater {
 
   relaunch () {
     if (app.isPackaged) {
-      if (fs.existsSync(this.execPath)) {
-        spawn(
-          this.execPath,
-          process.platform === 'win32' ? [
-            getPath('.patch'),
-            getPath(),
-            [process.argv0, ...process.argv.slice(1)].join(' ')
-          ] : [
-            getPath('.patch'),
-            getPath(),
-            process.argv0,
-            ...process.argv.slice(1)
-          ], { detached: process.platform === 'win32', stdio: 'ignore' }
-        ).unref()
+      if (this.customExe) {
         app.exit()
       } else {
         if (fs.existsSync(updater)) fs.renameSync(updater, getPath('app'))
@@ -200,7 +187,8 @@ class Updater {
         return null
       }
 
-      const appZip = latest.assets.filter((a) => a.name === `${this.prefix}-${process.platform}-${process.arch}.zip`)[0]
+      // const appZip = latest.assets.filter((a) => a.name === `${this.prefix}-${process.platform}-${process.arch}.zip`)[0]
+      const appZip = latest.assets.filter((a) => (new RegExp(`^${this.prefix}(-.*)?-${process.platform}-${process.arch}\\.zip$`)).test(a.name))[0]
       const zip = latest.assets.filter((a) => ((a.content_type === 'application/x-zip-compressed' || a.content_type === 'application/zip') && (a.name.indexOf(`${process.platform}-${process.arch}`) !== -1)))[0]
       const exe = latest.assets.filter((a) => ((a.content_type === 'application/x-msdownload') && (a.name.indexOf(`${process.platform}-${process.arch}`) !== -1)))[0]
 

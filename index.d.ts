@@ -95,7 +95,7 @@ declare interface Info {
 }
 
 declare class Updater {
-  constructor (repo: string, prefix?: string)
+  constructor (repo: string, prefix?: string, customExe?: boolean)
   relaunch (): void
   isReadyToDownload (): boolean
   getUpdateInfo (): Info | null
