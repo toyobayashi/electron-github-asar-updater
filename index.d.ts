@@ -5,10 +5,13 @@ declare class Updater {
   getUpdateInfo (): Updater.Info | null
   download (onProgress?: Updater.OnProgressCallback): Promise<boolean>
   abort (): void
-  check (options?: { prerelease?: -1 | 0 | 1 }): Promise<Updater.Info | null>
+  check (options?: Updater.CheckOptions): Promise<Updater.Info | null>
 }
 
 declare namespace Updater {
+  export interface CheckOptions {
+    prerelease?: -1 | 0 | 1
+  }
   export interface Info {
     version: string
     commit: string
