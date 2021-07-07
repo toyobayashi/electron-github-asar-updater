@@ -5,6 +5,7 @@ declare class Updater {
   getUpdateInfo (): Updater.Info | null
   download (onProgress?: Updater.OnProgressCallback): Promise<boolean>
   abort (): void
+  setProxy (proxy: string): void
   check (options?: Updater.CheckOptions): Promise<Updater.Info | null>
 }
 

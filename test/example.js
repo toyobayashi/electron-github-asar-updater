@@ -8,7 +8,8 @@ function getPath (...relative) {
 }
 
 module.exports = function () {
-  const updater = new Updater('toyobayashi/electron-github-asar-updater', 'resources', true)
+  const useCustomExe = false
+  const updater = new Updater('toyobayashi/electron-github-asar-updater', 'resources', useCustomExe)
 
   ipcMain.on('update', async function (ev) {
     try {
@@ -27,20 +28,22 @@ module.exports = function () {
         })
 
         if (downloadResult) {
-          require('child_process').spawn(
-            // build /exe first, then place executable to resources/updater
-            process.platform === 'win32' ? path.join(__dirname, '../updater/updater.exe') : path.join(__dirname, '../updater/updater'),
-            process.platform === 'win32' ? [
-              getPath('.patch'),
-              getPath(),
-              [process.argv0, ...process.argv.slice(1)].join(' ')
-            ] : [
-              getPath('.patch'),
-              getPath(),
-              process.argv0,
-              ...process.argv.slice(1)
-            ], { detached: process.platform === 'win32', stdio: 'ignore' }
-          ).unref()
+          if (useCustomExe) {
+            require('child_process').spawn(
+              // build /exe first, then place executable to resources/updater
+              process.platform === 'win32' ? path.join(__dirname, '../updater/updater.exe') : path.join(__dirname, '../updater/updater'),
+              process.platform === 'win32' ? [
+                getPath('.patch'),
+                getPath(),
+                [process.argv0, ...process.argv.slice(1)].join(' ')
+              ] : [
+                getPath('.patch'),
+                getPath(),
+                process.argv0,
+                ...process.argv.slice(1)
+              ], { detached: process.platform === 'win32', stdio: 'ignore' }
+            ).unref()
+          }
           updater.relaunch()
         } else {
           ev.sender.send('update-error', 'download aborted.')

@@ -1,10 +1,11 @@
 const path = require('path')
 const { spawn } = require('child_process')
-const fs = require('fs-extra')
+const fs = require('fs')
 const semver = require('semver')
-const got = require('got')
+const got = require('got').default
 const { unzip } = require('zauz')
-const download = require('./lib/download.js')
+const ProxyAgent = require('proxy-agent')
+const tybysDownloader = require('@tybys/downloader')
 const updaterScript = require('./lib/updater.js')
 
 let app = null
@@ -49,6 +50,36 @@ try {
 const dotPatch = getPath('.patch')
 const updater = getPath('updater')
 
+function getProxyAgent (proxy) {
+  if (proxy) {
+    const agent = new ProxyAgent(proxy)
+    return {
+      http: agent,
+      https: agent
+    }
+  }
+
+  let agent
+
+  const httpProxy = process.env.http_proxy || process.env.HTTP_PROXY
+  if (httpProxy) {
+    agent = agent || {}
+    agent.http = new ProxyAgent(httpProxy)
+  }
+
+  const httpsProxy = process.env.https_proxy || process.env.HTTPS_PROXY
+  if (httpsProxy) {
+    agent = agent || {}
+    agent.https = new ProxyAgent(httpsProxy)
+  }
+
+  return agent || false
+}
+
+function mkdirpSync (dir) {
+  fs.mkdirSync(dir, { recursive: true })
+}
+
 class Updater {
   constructor (repo, prefix = 'app', customExe = false) {
     if (typeof repo !== 'string') throw new TypeError('Argument type error: new Updater(repo: string, prefix?: string, exe?: boolean)')
@@ -59,11 +90,19 @@ class Updater {
     this.reqObj = null
     this.prefix = prefix
     this.customExe = customExe
+    this.proxy = ''
+    this.headers = {
+      'User-Agent': 'electron-github-asar-updater'
+    }
+    this.got = got.extend({
+      headers: this.headers,
+      responseType: 'json'
+    })
 
     if (app.isPackaged) {
       if (!this.customExe) {
         if (!fs.existsSync(getPath('./updater/index.js')) || !fs.existsSync(getPath('./updater/package.json'))) {
-          fs.mkdirsSync(updater)
+          mkdirpSync(updater)
           fs.writeFileSync(getPath('./updater/index.js'), updaterScript)
           fs.writeFileSync(getPath('./updater/package.json'), JSON.stringify({ main: './index.js' }))
         }
@@ -73,6 +112,10 @@ class Updater {
         this.relaunch()
       }
     }
+  }
+
+  setProxy (proxy) {
+    this.proxy = proxy
   }
 
   relaunch () {
@@ -97,41 +140,78 @@ class Updater {
 
   abort () {
     if (this.reqObj) {
-      this.reqObj.req.abort()
-      this.reqObj.req = null
+      this.reqObj.abort()
+      this.reqObj = null
     }
   }
 
   download (onProgress) {
-    if (app.isPackaged) {
-      if (!this.isReadyToDownload()) return Promise.reject(`No update or target file \`${this.prefix}-\${platform}-\${arch}.zip\` not found.`)
-      this.abort()
-      return new Promise((resolve, reject) => {
-        this.reqObj = download(this.info.appZipUrl, getPath('app.zip'), onProgress, (err, filepath) => {
-          if (err) {
-            reject(err)
-            return
-          }
-          if (filepath) {
-            if (!fs.existsSync(dotPatch)) fs.mkdirsSync(dotPatch)
-            unzip(getPath('app.zip'), dotPatch).then(() => {
-              fs.removeSync(getPath('app.zip'))
-              resolve(true)
-            }).catch(err => {
-              reject(err)
+    if (!app.isPackaged) return Promise.resolve(false)
+
+    if (!this.isReadyToDownload()) return Promise.reject(`No update or target file \`${this.prefix}-\${platform}-\${arch}.zip\` not found.`)
+    this.abort()
+    return new Promise((resolve, reject) => {
+      const p = getPath('app.zip')
+      let start = 0
+      const d = tybysDownloader.Downloader.download(this.info.appZipUrl, {
+        dir: path.dirname(p),
+        out: path.basename(p),
+        headers: this.headers,
+        agent: this.proxy
+      })
+      const base = path.parse(d.path).base
+
+      d.on('progress', (progress) => {
+        if (typeof onProgress === 'function') {
+          if (progress.completedLength === 0 || progress.percent === 100) {
+            onProgress({
+              name: base,
+              current: progress.completedLength,
+              max: progress.totalLength,
+              loading: progress.percent
             })
           } else {
-            resolve(false)
+            const now = Date.now()
+            if (now - start > 100) {
+              start = now
+              onProgress({
+                name: base,
+                current: progress.completedLength,
+                max: progress.totalLength,
+                loading: progress.percent
+              })
+            }
           }
-        })
+        }
       })
-    } else {
-      return Promise.resolve(false)
-    }
+      this.reqObj = d
+
+      d.whenStopped().then(() => {
+        resolve(d.path)
+      }).catch(err => {
+        if (err.code != null) {
+          if (err.code === tybysDownloader.DownloadErrorCode.ABORT) {
+            resolve('')
+            return
+          }
+          if (err.code === tybysDownloader.DownloadErrorCode.FILE_EXISTS) {
+            resolve(d.path)
+            return
+          }
+        }
+        reject(err)
+      })
+    }).then(zipPath => {
+      if (!zipPath) return false
+      if (!fs.existsSync(dotPatch)) mkdirpSync(dotPatch)
+      return unzip(zipPath, dotPatch).then(() => {
+        fs.unlinkSync(zipPath)
+        return true
+      })
+    })
   }
 
   check (options) {
-
     if (typeof options === 'undefined') {
       options = {
         prerelease: -1
@@ -161,9 +241,10 @@ class Updater {
       headers
     }
 
+    const agent = getProxyAgent(this.proxy || '')
     return Promise.all([
-      got.get(releases.url, { json: true, headers }),
-      got.get(tags.url, { json: true, headers })
+      this.got.get(releases.url, { agent }),
+      this.got.get(tags.url, { agent })
     ]).then(([{ body: releaseList }, { body: tagList }]) => {
       releaseList = releaseList.filter(r => r.draft === false)
 
