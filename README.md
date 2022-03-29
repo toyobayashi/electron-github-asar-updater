@@ -2,7 +2,7 @@
 
 This package works after Electron app is packaged.
 
-electron-github-asar-updater v2.x require Electron version >= 2.0.0
+electron-github-asar-updater v2.x require Electron version **`>= 2.0.0 && < 15.0.0`**
 
 ## Usage
 
